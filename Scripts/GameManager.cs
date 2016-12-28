@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 
 /* 
- * v0.0.1-r01
+ * v0.0.1-r02
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/GameManager.cs
@@ -28,6 +28,7 @@ public class GameManager : MonoBehaviour
     public string SetPlayerName = "Player";
     public InputField myInputField;
     public bool isGameOver = false;
+    public bool isNewGame = true;
     void Awake()
     {
         if (instance)
@@ -44,19 +45,29 @@ public class GameManager : MonoBehaviour
         GameObject sm = GameObject.FindGameObjectWithTag("SettingsMenu");
         DontDestroyOnLoad(sm);
         LoadSettings();
+        Debug.Log("GameManager.cs called by GameObject: " + gameObject.name);
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        GameObject pl = GameObject.FindGameObjectWithTag("PauseLabel");
+        if (IsPaused == true)
+        {
+            pl.GetComponent<Text>().enabled = true;
+        } else if (IsPaused == false)
+        {
+            pl.GetComponent<Text>().enabled = false;
+        }
+        
     }
     public void NewGame()
     {
         string ScoreFile = Application.dataPath + "/Scores.dat";
-        GameObject gsui = GameObject.FindGameObjectWithTag("gsui");
+        //GameObject gsui = GameObject.FindGameObjectWithTag("gsui");
         GameObject PlayerLabel = GameObject.FindGameObjectWithTag("PlayerLabel");
         GameObject pl = GameObject.FindGameObjectWithTag("PauseLabel");
+        GameObject Scripting = GameObject.FindGameObjectWithTag("ScriptsObject");
         pl.GetComponent<Text>().enabled = false;
         //gsui.GetComponent<ScoreScript>().RefreshHighScore();
         if (File.Exists(ScoreFile) == false)
@@ -64,7 +75,10 @@ public class GameManager : MonoBehaviour
             File.Create(ScoreFile);
         }
         PlayerLabel.GetComponent<Text>().text = GameManager.Instance.SetPlayerName;
+        //Is this needed?
         LoadSettings();
+        //
+        Scripting.GetComponent<BlackJack>().CreateDeck();
         //Debug Stuff
         Debug.Log(ScoreFile);
         Debug.Log(File.Exists(ScoreFile));
@@ -147,8 +161,8 @@ public class GameManager : MonoBehaviour
     }
     public void LoadSettings()
     {
-        LoadPlayer();
-        LoadMusic();
+        //LoadPlayer();
+        //LoadMusic();
     }
     public void ScreenFlash()
     {
