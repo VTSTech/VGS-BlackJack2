@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 
 /* 
- * v0.0.1-r02
+ * v0.0.1-r03
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/ScoreScript.cs

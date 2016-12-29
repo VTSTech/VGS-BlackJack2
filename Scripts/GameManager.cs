@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 
 /* 
- * v0.0.1-r02
+ * v0.0.1-r03
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/GameManager.cs
@@ -76,7 +76,7 @@ public class GameManager : MonoBehaviour
         }
         PlayerLabel.GetComponent<Text>().text = GameManager.Instance.SetPlayerName;
         //Is this needed?
-        LoadSettings();
+        //LoadSettings();
         //
         Scripting.GetComponent<BlackJack>().CreateDeck();
         //Debug Stuff

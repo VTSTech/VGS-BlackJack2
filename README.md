@@ -1,3 +1,22 @@
+v0.0.1-r03
+
+Added Card face down texture
+
+Added New Game button to Game Scene
+
+CreateDeck() is now called on Start() of BlackJack.cs
+
+Added 52 prefabs for Card Face Textures
+
+Added DealCards() and DestroyDeck()
+
+on DealCards() 4 random cards are generated.
+
+Not checked against a virtual deck yet.
+
+<img src="https://i.gyazo.com/a9bfcda3e43241383dc8e9376df98f42.jpg">
+
+
 v0.0.1-r02
 
 Added background
