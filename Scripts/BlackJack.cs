@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 
 /* 
- * v0.0.1-r05
+ * v0.0.1-r06
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/BlackJack.cs
@@ -19,13 +19,14 @@ public class BlackJack : MonoBehaviour {
     public float SliderVal;
     public string ToWho;
     public static bool[] hasCardPlayed = new bool[53];
-    public bool isPlayerStanding, isDealerStanding;
+    public bool isPlayerStanding, isDealerStanding, DealerHasAce, PlayerHasAce;
     // Use this for initialization
     void Start()
     {
         
         Debug.Log("BlackJack.cs called by GameObject: " + gameObject.name);
         GameManager.Instance.CurrentCash = 1000;
+        CurrentBet = 100;
         CreateDeck();
     }
     // Update is called once per frame
@@ -50,7 +51,8 @@ public class BlackJack : MonoBehaviour {
         GameManager.Instance.isRewarded = false;
         isPlayerStanding = false;
         isDealerStanding = false;
-        
+        PlayerHasAce = false;
+        DealerHasAce = false;
         hl.GetComponent<Text>().text = "0";
         HideDeck();
         DH1Val = Random.Range(1, 13);
@@ -208,7 +210,8 @@ public class BlackJack : MonoBehaviour {
             }
             GameManager.Instance.PlayerValue = (CardHintA + CardHintB);
             hl.GetComponent<Text>().text = GameManager.Instance.PlayerValue.ToString();
-        } else if (CardValue == 1 || CardValue >= 12)
+        }
+        else if (CardValue == 1 || CardValue >= 12)
         {
             if (CardHintA == 0)
             {
@@ -226,6 +229,34 @@ public class BlackJack : MonoBehaviour {
             GameManager.Instance.PlayerValue = (CardHintA + CardHintB);
             hl.GetComponent<Text>().text = GameManager.Instance.PlayerValue.ToString();
         }
+        else if (CardValue == 11)
+        {
+            if (CardHintA == 0)
+            {
+                CardHintA = 11;
+            }
+            else if (CardHintA != 0 && CardHintB == 0)
+            {
+                CardHintB = 11;
+            }
+            else
+            {
+                CardHintA = CardHintA + CardHintB;
+                if (CardHintA + 11 >= 22)
+                {
+                    CardHintB = 1;
+                }
+                else if (CardHintA + 11 <= 21)
+                {
+                    CardHintB = 11;
+                }
+
+            }
+            GameManager.Instance.PlayerValue = (CardHintA + CardHintB);
+            hl.GetComponent<Text>().text = GameManager.Instance.PlayerValue.ToString();
+            PlayerHasAce = true;
+        }
+
     }
     public void UpdateDealer(int CardValue)
     {
@@ -266,6 +297,32 @@ public class BlackJack : MonoBehaviour {
             }
             GameManager.Instance.DealerValue = DealerHintA + DealerHintB;
             dh.GetComponent<Text>().text = GameManager.Instance.DealerValue.ToString();
+        } else if (CardValue == 11)
+        {
+            if (DealerHintA == 0)
+            {
+                DealerHintA = 11;
+            }
+            else if (DealerHintA != 0 && DealerHintB == 0)
+            {
+                DealerHintB = 11;
+            }
+            else
+            {
+                DealerHintA = DealerHintA + DealerHintB;
+                if (DealerHintA + 11 >= 22)
+                {
+                    DealerHintB = 1;
+                }
+                else if (DealerHintA + 11 <= 21)
+                {
+                    DealerHintB = 11;
+                }
+
+            }
+            GameManager.Instance.DealerValue = (DealerHintA + DealerHintB);
+            dh.GetComponent<Text>().text = GameManager.Instance.DealerValue.ToString();
+            DealerHasAce = true;
         }
     }
     public void DealCards(string ToWho, int CardValue, int CardSuit)
@@ -586,14 +643,23 @@ public class BlackJack : MonoBehaviour {
         GameObject BetSlider = GameObject.FindGameObjectWithTag("BetSlider");
         if (isDealerStanding == true && isPlayerStanding == true)
         {
-            BetLabel.GetComponent<Text>().text = BetSlider.GetComponent<Slider>().value.ToString();
-            SliderVal = BetSlider.GetComponent<Slider>().value;
-            CurrentBet = ( (int) Mathf.Round(SliderVal));
+            if (BetSlider.GetComponent<Slider>().value > GameManager.Instance.CurrentCash)
+            {
+                SliderVal = GameManager.Instance.CurrentCash;
+                CurrentBet = GameManager.Instance.CurrentCash;
+                BetLabel.GetComponent<Text>().text = GameManager.Instance.CurrentCash.ToString();
+            }
+            else if (BetSlider.GetComponent<Slider>().value < GameManager.Instance.CurrentCash)
+            {
+                SliderVal = BetSlider.GetComponent<Slider>().value;
+                CurrentBet = ((int)Mathf.Round(SliderVal));
+                BetLabel.GetComponent<Text>().text = BetSlider.GetComponent<Slider>().value.ToString();
+            }
+        } else
+        {
+            SliderVal = CurrentBet;
+            BetLabel.GetComponent<Text>().text = CurrentBet.ToString();
         }
-        //Will update even during in game for now. Will conditional this out later
-        SliderVal = BetSlider.GetComponent<Slider>().value;
-        CurrentBet = ((int)Mathf.Round(SliderVal));
-        BetLabel.GetComponent<Text>().text = BetSlider.GetComponent<Slider>().value.ToString();
     }
     public void DestroyDeck()
     {

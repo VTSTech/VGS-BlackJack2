@@ -1,3 +1,20 @@
+v0.0.1-r06
+
+Now processes Aces
+
+Added Player/DealerHasAce bool variables
+
+Moved DealerHint Label up a bit
+
+Can no longer change Bet Value while game is in progress
+
+Can no longer bet more than your Current Cash Value
+
+Bet Value is now set to 100 on Start() (BlackJack.cs)
+
+<img src="https://i.gyazo.com/11fe1033dce6889fbd3392e6f501dff6.jpg">
+
+
 v0.0.1-r05
 
 Can no longer Hit or Stand while isGameOver == true

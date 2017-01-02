@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /* 
- * v0.0.1-r05
+ * v0.0.1-r06
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/QuitOnClick.cs

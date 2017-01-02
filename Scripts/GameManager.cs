@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 
 /* 
- * v0.0.1-r05
+ * v0.0.1-r06
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/GameManager.cs
