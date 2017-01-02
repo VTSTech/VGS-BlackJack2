@@ -10,6 +10,10 @@ Cash Value now subtracts or increments the Bet Value on Win/Lose condition
 
 Added isRewarded global variable to GameManager.cs
 
+Added UpdateBet()
+
+<img src="https://i.gyazo.com/0bde061df5cdaca43e235506436eaaaf.jpg">
+
 
 v0.0.1-r04
 
