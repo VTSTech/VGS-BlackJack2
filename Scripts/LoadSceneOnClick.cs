@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using System.Text;
 using UnityEngine.UI;
 /* 
- * v0.0.1-r02
+ * v0.0.1-r05
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/LoadSceneonClick.cs

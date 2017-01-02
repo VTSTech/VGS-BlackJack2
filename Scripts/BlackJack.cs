@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 
 /* 
- * v0.0.1-r04
+ * v0.0.1-r05
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/BlackJack.cs
@@ -16,6 +16,7 @@ public class BlackJack : MonoBehaviour {
 
     public int DH1Val, DH2Val, PH1Val, PH2Val, PH1Suit, PH2Suit, DH1Suit, DH2Suit, CardValue, CardSuit, CardIndex, CardHintA, CardHintB;
     public int NumPlayerCards, NumDealerCards, DealerHintA, DealerHintB, CurrentBet;
+    public float SliderVal;
     public string ToWho;
     public static bool[] hasCardPlayed = new bool[53];
     public bool isPlayerStanding, isDealerStanding;
@@ -24,6 +25,7 @@ public class BlackJack : MonoBehaviour {
     {
         
         Debug.Log("BlackJack.cs called by GameObject: " + gameObject.name);
+        GameManager.Instance.CurrentCash = 1000;
         CreateDeck();
     }
     // Update is called once per frame
@@ -32,7 +34,7 @@ public class BlackJack : MonoBehaviour {
 
         GameObject CashLabel = GameObject.FindGameObjectWithTag("CashLabel");
         CashLabel.GetComponent<Text>().text = "Cash: $" + GameManager.Instance.CurrentCash.ToString();
-        //
+        UpdateBet();
         CheckGame();
     }
     
@@ -45,6 +47,7 @@ public class BlackJack : MonoBehaviour {
         Debug.Log("DealNewGame() fired!");
         GameManager.Instance.isNewGame = false;
         GameManager.Instance.isGameOver = false;
+        GameManager.Instance.isRewarded = false;
         isPlayerStanding = false;
         isDealerStanding = false;
         
@@ -393,38 +396,56 @@ public class BlackJack : MonoBehaviour {
     }
     public void HitPlayer()
     {
-        Debug.Log("HitPlayer() fired!");
         GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
-        GameStatus.GetComponent<Text>().text = "Player Hits... (Numcards = " + NumPlayerCards.ToString();
-        if (NumPlayerCards == 2)
+        if (GameManager.Instance.isGameOver == false)
         {
-            DealCards("PlayerHand3", Random.Range(1, 13), Random.Range(1, 4));
-            NumPlayerCards++;
-        } else if (NumPlayerCards == 3)
-        {
-            DealCards("PlayerHand4", Random.Range(1, 13), Random.Range(1, 4));
-            NumPlayerCards++;
+            Debug.Log("HitPlayer() fired! A");
+            GameStatus.GetComponent<Text>().text = "Player Hits... (Numcards = " + NumPlayerCards.ToString();
+            if (NumPlayerCards == 2)
+            {
+                DealCards("PlayerHand3", Random.Range(1, 13), Random.Range(1, 4));
+                NumPlayerCards++;
+            }
+            else if (NumPlayerCards == 3)
+            {
+                DealCards("PlayerHand4", Random.Range(1, 13), Random.Range(1, 4));
+                NumPlayerCards++;
+            }
+            else if (NumPlayerCards == 4)
+            {
+                DealCards("PlayerHand5", Random.Range(1, 13), Random.Range(1, 4));
+                NumPlayerCards++;
+            }
+            else if (NumPlayerCards >= 5)
+            {
+                StandPlayer();
+            }
         }
-        else if (NumPlayerCards == 4)
+        else if (GameManager.Instance.isGameOver == true)
         {
-            DealCards("PlayerHand5", Random.Range(1, 13), Random.Range(1, 4));
-            NumPlayerCards++;
-        } else if (NumPlayerCards >= 5)
-        {
-            StandPlayer();
+            Debug.Log("HitPlayer() fired! B");
+            GameStatus.GetComponent<Text>().text = "Deal a New Game!";
+            GameStatus.SetActive(true);
         }
-        //Is this needed?
-        //CheckGame();
     }
     public void StandPlayer()
     {
         GameObject hl = GameObject.FindGameObjectWithTag("HintLabel");
         GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
+        if (GameManager.Instance.isGameOver == false)
+        { 
         isPlayerStanding = true;
-        Debug.Log("StandPlayer() fired!");
+        Debug.Log("StandPlayer() fired! A");
         GameManager.Instance.PlayerValue = int.Parse(hl.GetComponent<Text>().text);
         HitDealer();
         GameStatus.GetComponent<Text>().text = "Player Stands...";
+        }
+        else if (GameManager.Instance.isGameOver == true)
+        {
+            Debug.Log("StandPlayer() fired! B");
+            GameStatus.GetComponent<Text>().text = "Deal a New Game!";
+            GameStatus.SetActive(true);
+        }
     }
     public void HitDealer()
     {
@@ -433,7 +454,7 @@ public class BlackJack : MonoBehaviour {
         GameStatus.GetComponent<Text>().text = "Dealer Hits...";
         do
         {
-            if (GameManager.Instance.DealerValue <= 17)
+            if (GameManager.Instance.DealerValue <= 16)
             {
                 if (NumDealerCards == 2)
                 {
@@ -450,12 +471,17 @@ public class BlackJack : MonoBehaviour {
                     DealCards("DealerHand5", Random.Range(1, 13), Random.Range(1, 4));
                     NumDealerCards++;
                 }
+                else if (NumDealerCards >= 5)
+                {
+                    StandDealer();
+                }
             }
             else if (GameManager.Instance.DealerValue >= 17)
             {
                 StandDealer();
             }
-        } while (GameManager.Instance.DealerValue <= 17);
+        } while (GameManager.Instance.DealerValue <= 16);
+        StandDealer();
     }
     public void StandDealer()
     {
@@ -463,7 +489,6 @@ public class BlackJack : MonoBehaviour {
         isDealerStanding = true;
         Debug.Log("StandDealer() fired!");
         GameStatus.GetComponent<Text>().text = "Dealer Stands...";
-        GameManager.Instance.isGameOver = true;
         CheckGame();
     }
     public void ShowDealButton()
@@ -472,8 +497,8 @@ public class BlackJack : MonoBehaviour {
     }
     public void CheckGame()
     {
-        GameManager.Instance.isGameOver = false;
         GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
+        GameObject CashLabel = GameObject.FindGameObjectWithTag("CashLabel");
 
         //Set isGameOver here.
 
@@ -517,31 +542,58 @@ public class BlackJack : MonoBehaviour {
                 ShowDealButton();
                 GameManager.Instance.isGameOver = true;
             }
+            else if (GameManager.Instance.PlayerValue == GameManager.Instance.DealerValue)
+            {
+                Debug.Log("PUSH! (CheckGame())");
+                GameStatus.GetComponent<Text>().text = "No One Wins!";
+                ShowDealButton();
+                GameManager.Instance.isGameOver = true;
+            }
         }
        //GameManager.Instance.isGameOver = true;
        //Game is over. Do rewards...
-       if (GameManager.Instance.isGameOver == true)
+       if (GameManager.Instance.isGameOver == true && GameManager.Instance.isRewarded == false)
        {
+            GameManager.Instance.isRewarded = true;
             //DealerValue Checks
             if (GameManager.Instance.DealerValue > GameManager.Instance.PlayerValue && GameManager.Instance.DealerValue <= 21)
             {
-                GameManager.Instance.CurrentCash = GameManager.Instance.CurrentCash - CurrentBet;
+                GameManager.Instance.CurrentCash = (GameManager.Instance.CurrentCash - CurrentBet);
+                CashLabel.GetComponent<Text>().text = "Cash: $" + GameManager.Instance.CurrentCash.ToString();
             }
             else if (GameManager.Instance.DealerValue >= 22)
             {
                 GameManager.Instance.CurrentCash = GameManager.Instance.CurrentCash + CurrentBet;
+                CashLabel.GetComponent<Text>().text = "Cash: $" + GameManager.Instance.CurrentCash.ToString();
             }
 
             //PlayerValue Checks
             if (GameManager.Instance.PlayerValue > GameManager.Instance.DealerValue && GameManager.Instance.PlayerValue <= 21)
             {
                 GameManager.Instance.CurrentCash = GameManager.Instance.CurrentCash + CurrentBet;
+                CashLabel.GetComponent<Text>().text = "Cash: $" + GameManager.Instance.CurrentCash.ToString();
             } else if (GameManager.Instance.PlayerValue >= 22)
             {
                 GameManager.Instance.CurrentCash = GameManager.Instance.CurrentCash - CurrentBet;
+                CashLabel.GetComponent<Text>().text = "Cash: $" + GameManager.Instance.CurrentCash.ToString();
             }
         }
 
+    }
+    public void UpdateBet()
+    {
+        GameObject BetLabel = GameObject.FindGameObjectWithTag("BetLabel");
+        GameObject BetSlider = GameObject.FindGameObjectWithTag("BetSlider");
+        if (isDealerStanding == true && isPlayerStanding == true)
+        {
+            BetLabel.GetComponent<Text>().text = BetSlider.GetComponent<Slider>().value.ToString();
+            SliderVal = BetSlider.GetComponent<Slider>().value;
+            CurrentBet = ( (int) Mathf.Round(SliderVal));
+        }
+        //Will update even during in game for now. Will conditional this out later
+        SliderVal = BetSlider.GetComponent<Slider>().value;
+        CurrentBet = ((int)Mathf.Round(SliderVal));
+        BetLabel.GetComponent<Text>().text = BetSlider.GetComponent<Slider>().value.ToString();
     }
     public void DestroyDeck()
     {

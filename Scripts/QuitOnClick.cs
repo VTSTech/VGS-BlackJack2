@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /* 
- * v0.0.1-r04
+ * v0.0.1-r05
  * Written by Veritas83
  * www.NigelTodman.com
- * /Scripts/LoadSceneonClick.cs
+ * /Scripts/QuitOnClick.cs
  */
 
 public class QuitOnClick : MonoBehaviour

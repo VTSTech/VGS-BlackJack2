@@ -1,3 +1,16 @@
+v0.0.1-r05
+
+Can no longer Hit or Stand while isGameOver == true
+
+Most games end with a Winner now. No Winner is possible.
+
+Bet Value now updates when Slider is changed
+
+Cash Value now subtracts or increments the Bet Value on Win/Lose condition
+
+Added isRewarded global variable to GameManager.cs
+
+
 v0.0.1-r04
 
 Added CardIndex

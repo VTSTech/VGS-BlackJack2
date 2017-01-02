@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 
 /* 
- * v0.0.1-r04
+ * v0.0.1-r05
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/GameManager.cs
@@ -29,6 +29,7 @@ public class GameManager : MonoBehaviour
     public InputField myInputField;
     public bool isGameOver = false;
     public bool isNewGame = true;
+    public bool isRewarded = false;
     public int DealerValue = 0;
     public int PlayerValue = 0;
     void Awake()
