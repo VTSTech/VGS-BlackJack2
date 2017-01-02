@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 
 /* 
- * v0.0.1-r03
+ * v0.0.1-r04
  * Written by Veritas83
  * www.NigelTodman.com
  * /Scripts/BlackJack.cs
@@ -14,12 +14,15 @@ using System.Text;
 
 public class BlackJack : MonoBehaviour {
 
-    public int DH1Val, DH2Val, PH1Val, PH2Val, PH1Suit, PH2Suit, DH1Suit, DH2Suit, CardValue, CardSuit;
+    public int DH1Val, DH2Val, PH1Val, PH2Val, PH1Suit, PH2Suit, DH1Suit, DH2Suit, CardValue, CardSuit, CardIndex, CardHintA, CardHintB;
+    public int NumPlayerCards, NumDealerCards, DealerHintA, DealerHintB, CurrentBet;
     public string ToWho;
-
+    public static bool[] hasCardPlayed = new bool[53];
+    public bool isPlayerStanding, isDealerStanding;
     // Use this for initialization
     void Start()
     {
+        
         Debug.Log("BlackJack.cs called by GameObject: " + gameObject.name);
         CreateDeck();
     }
@@ -27,32 +30,101 @@ public class BlackJack : MonoBehaviour {
     void Update()
     {
 
+        GameObject CashLabel = GameObject.FindGameObjectWithTag("CashLabel");
+        CashLabel.GetComponent<Text>().text = "Cash: $" + GameManager.Instance.CurrentCash.ToString();
+        //
+        CheckGame();
     }
     
     //start
     public GameObject Deck;
+    //public GameManager GameStatus;
     public void DealNewGame()
     {
+        GameObject hl = GameObject.FindGameObjectWithTag("HintLabel");
         Debug.Log("DealNewGame() fired!");
         GameManager.Instance.isNewGame = false;
         GameManager.Instance.isGameOver = false;
-        DH1Val = Random.Range(1, 11);
-        DH2Val = Random.Range(1, 11);
-        PH1Val = Random.Range(1, 11);
-        PH2Val = Random.Range(1, 11);
+        isPlayerStanding = false;
+        isDealerStanding = false;
+        
+        hl.GetComponent<Text>().text = "0";
+        HideDeck();
+        DH1Val = Random.Range(1, 13);
+        DH2Val = Random.Range(1, 13);
+        PH1Val = Random.Range(1, 13);
+        PH2Val = Random.Range(1, 13);
         DH1Suit = Random.Range(1, 4);
         DH2Suit = Random.Range(1, 4);
         PH1Suit = Random.Range(1, 4);
         PH2Suit = Random.Range(1, 4);
-        //1=Club CardC
-        //2=Diamond CardD
-        //3=Heart CardH
-        //4=Spade CardS
+        CardHintA = 0;
+        CardHintB = 0;
+        DealerHintA = 0;
+        DealerHintB = 0;
+        NumDealerCards = 2;
+        NumPlayerCards = 2;
+        GameManager.Instance.DealerValue = 0;
+        GameManager.Instance.PlayerValue = 0;
+        for (int x = 0; x <= 52; x++)
+        {
+            //Debug.Log("hasCardPlayed[" + x.ToString() + "]");
+            hasCardPlayed[x] = false;
+        }
+        //1=Club CardC 1-13
+        //2=Diamond CardD 14-27
+        //3=Heart CardH 28-40
+        //4=Spade CardS 41-52
         DealCards("DealerHand1", DH1Val, DH1Suit);
         DealCards("DealerHand2", DH2Val, DH2Suit);
         DealCards("PlayerHand1", PH1Val, PH1Suit);
         DealCards("PlayerHand2", PH2Val, PH2Suit);
+
         //GameObject.FindGameObjectWithTag("DealerHand1").GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardSA").GetComponent<SpriteRenderer>().sprite;
+    }
+    public int GetCardIndex(int CardValue, int CardSuit)
+    {
+        if (CardSuit == 1)
+        {
+            return CardValue;
+        }
+        else if (CardSuit == 2)
+        {
+            return CardValue + 13;
+        }
+        else if (CardSuit == 3)
+        {
+            return CardValue + 26;
+        }
+        else if (CardSuit == 4)
+        {
+            return CardValue + 39;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    public bool isPlayed(int CardIndex)
+    {
+        Debug.Log("isPlayed(" + CardIndex.ToString() + ") fired");
+        if (hasCardPlayed[CardIndex] == false)
+        {
+            return false;
+        } else
+        {
+            return true;
+        }    
+    }
+    public void HideDeck()
+    { 
+        GameObject.FindGameObjectWithTag("PlayerHand3").transform.localScale = new Vector3(0, 0, 0);
+        GameObject.FindGameObjectWithTag("PlayerHand4").transform.localScale = new Vector3(0, 0, 0);
+        GameObject.FindGameObjectWithTag("PlayerHand5").transform.localScale = new Vector3(0, 0, 0);
+        GameObject.FindGameObjectWithTag("DealerHand3").transform.localScale = new Vector3(0, 0, 0);
+        GameObject.FindGameObjectWithTag("DealerHand4").transform.localScale = new Vector3(0, 0, 0);
+        GameObject.FindGameObjectWithTag("DealerHand5").transform.localScale = new Vector3(0, 0, 0);
+        GameObject.FindGameObjectWithTag("Respawn").transform.localScale = new Vector3(0, 0, 0);
     }
     public void CreateDeck()
     {
@@ -70,6 +142,21 @@ public class BlackJack : MonoBehaviour {
         DeckDisplay.transform.parent = GameObject.FindGameObjectWithTag("gsui").transform;
         DeckDisplay.transform.localPosition = new Vector3(25, 250, 1);
         DeckDisplay = Instantiate(Deck, transform.position, Quaternion.identity) as GameObject;
+        DeckDisplay.name = "DealerHand3";
+        DeckDisplay.tag = "DealerHand3";
+        DeckDisplay.transform.parent = GameObject.FindGameObjectWithTag("gsui").transform;
+        DeckDisplay.transform.localPosition = new Vector3(150, 250, 1);
+        DeckDisplay = Instantiate(Deck, transform.position, Quaternion.identity) as GameObject;
+        DeckDisplay.name = "DealerHand4";
+        DeckDisplay.tag = "DealerHand4";
+        DeckDisplay.transform.parent = GameObject.FindGameObjectWithTag("gsui").transform;
+        DeckDisplay.transform.localPosition = new Vector3(275, 250, 1);
+        DeckDisplay = Instantiate(Deck, transform.position, Quaternion.identity) as GameObject;
+        DeckDisplay.name = "DealerHand5";
+        DeckDisplay.tag = "DealerHand5";
+        DeckDisplay.transform.parent = GameObject.FindGameObjectWithTag("gsui").transform;
+        DeckDisplay.transform.localPosition = new Vector3(400, 250, 1);
+        DeckDisplay = Instantiate(Deck, transform.position, Quaternion.identity) as GameObject;
         DeckDisplay.name = "PlayerHand1";
         DeckDisplay.tag = "PlayerHand1";
         DeckDisplay.transform.parent = GameObject.FindGameObjectWithTag("gsui").transform;
@@ -79,71 +166,382 @@ public class BlackJack : MonoBehaviour {
         DeckDisplay.tag = "PlayerHand2";
         DeckDisplay.transform.parent = GameObject.FindGameObjectWithTag("gsui").transform;
         DeckDisplay.transform.localPosition = new Vector3(25, -86, 1);
+        DeckDisplay = Instantiate(Deck, transform.position, Quaternion.identity) as GameObject;
+        DeckDisplay.name = "PlayerHand3";
+        DeckDisplay.tag = "PlayerHand3";
+        DeckDisplay.transform.parent = GameObject.FindGameObjectWithTag("gsui").transform;
+        DeckDisplay.transform.localPosition = new Vector3(150, -86, 1);
+        DeckDisplay = Instantiate(Deck, transform.position, Quaternion.identity) as GameObject;
+        DeckDisplay.name = "PlayerHand4";
+        DeckDisplay.tag = "PlayerHand4";
+        DeckDisplay.transform.parent = GameObject.FindGameObjectWithTag("gsui").transform;
+        DeckDisplay.transform.localPosition = new Vector3(275, -86, 1);
+        DeckDisplay = Instantiate(Deck, transform.position, Quaternion.identity) as GameObject;
+        DeckDisplay.name = "PlayerHand5";
+        DeckDisplay.tag = "PlayerHand5";
+        DeckDisplay.transform.parent = GameObject.FindGameObjectWithTag("gsui").transform;
+        DeckDisplay.transform.localPosition = new Vector3(400, -86, 1);
+        HideDeck();
         DealNewGame();
     }
-    public void DealCards(string ToWho,int CardValue,int CardSuit)
+    public void UpdateHint(int CardValue)
     {
-        //1=Club CardC
-        //2=Diamond CardD
-        //3=Heart CardH
-        //4=Spade CardS
-        Debug.Log("DealCards() fired!");
-        if (CardValue >= 2 && CardValue <= 9)
+        GameObject hl = GameObject.FindGameObjectWithTag("HintLabel");
+        Debug.Log("UpdateHint() fired! (Player)");
+        if (CardValue >= 2 && CardValue <= 10)
         {
-            if (CardSuit == 1)
+            if (CardHintA == 0)
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardC" + CardValue.ToString()).GetComponent<SpriteRenderer>().sprite;
+                CardHintA = CardValue;
             }
-            else if (CardSuit == 2)
+            else if (CardHintA != 0 && CardHintB == 0)
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardD" + CardValue.ToString()).GetComponent<SpriteRenderer>().sprite;
+                CardHintB = CardValue;
             }
-            else if (CardSuit == 3)
+            else
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardH" + CardValue.ToString()).GetComponent<SpriteRenderer>().sprite;
+                CardHintA = CardHintA + CardHintB;
+                CardHintB = CardValue;
             }
-            else if (CardSuit == 4)
-            {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardS" + CardValue.ToString()).GetComponent<SpriteRenderer>().sprite;
-            }
-        } else if (CardValue == 10)
+            GameManager.Instance.PlayerValue = (CardHintA + CardHintB);
+            hl.GetComponent<Text>().text = GameManager.Instance.PlayerValue.ToString();
+        } else if (CardValue == 1 || CardValue >= 12)
         {
-            if (CardSuit == 1)
+            if (CardHintA == 0)
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardC10").GetComponent<SpriteRenderer>().sprite;
+                CardHintA = 10;
             }
-            else if (CardSuit == 2)
+            else if (CardHintA != 0 && CardHintB == 0)
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardD10").GetComponent<SpriteRenderer>().sprite;
+                CardHintB = 10;
             }
-            else if (CardSuit == 3)
+            else
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardH10").GetComponent<SpriteRenderer>().sprite;
+                CardHintA = CardHintA + CardHintB;
+                CardHintB = 10;
             }
-            else if (CardSuit == 4)
+            GameManager.Instance.PlayerValue = (CardHintA + CardHintB);
+            hl.GetComponent<Text>().text = GameManager.Instance.PlayerValue.ToString();
+        }
+    }
+    public void UpdateDealer(int CardValue)
+    {
+        GameObject dh = GameObject.FindGameObjectWithTag("DealerHint");
+        Debug.Log("UpdateDealer() fired!");
+        if (CardValue >= 2 && CardValue <= 10)
+        {
+            if (DealerHintA == 0)
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardS10").GetComponent<SpriteRenderer>().sprite;
+                DealerHintA = CardValue;
+            }
+            else if (DealerHintA != 0 && DealerHintB == 0)
+            {
+                DealerHintB = CardValue;
+            }
+            else
+            {
+                DealerHintA = DealerHintA + DealerHintB;
+                DealerHintB = CardValue;
+            }
+            GameManager.Instance.DealerValue = DealerHintA + DealerHintB;
+            dh.GetComponent<Text>().text = GameManager.Instance.DealerValue.ToString();
+        }
+        else if (CardValue == 1 || CardValue >= 12)
+        {
+            if (DealerHintA == 0)
+            {
+                DealerHintA = 10;
+            }
+            else if (DealerHintA != 0 && DealerHintB == 0)
+            {
+                DealerHintB = 10;
+            }
+            else
+            {
+                DealerHintA = DealerHintA + DealerHintB;
+                DealerHintB = 10;
+            }
+            GameManager.Instance.DealerValue = DealerHintA + DealerHintB;
+            dh.GetComponent<Text>().text = GameManager.Instance.DealerValue.ToString();
+        }
+    }
+    public void DealCards(string ToWho, int CardValue, int CardSuit)
+    {
+        //1=Club CardC 1-13
+        //2=Diamond CardD 14-27
+        //3=Heart CardH 28-40
+        //4=Spade CardS 41-52
+        GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
+        GameStatus.GetComponent<Text>().text = "Dealing Cards...";
+        Debug.Log("DealCards() fired! ToWho(" + ToWho + ")");
+        GameObject.FindGameObjectWithTag(ToWho).transform.localScale = new Vector3(1, 1, 1);
+        if (ToWho.Contains("Player"))
+        {
+            UpdateHint(CardValue);
+        }
+        else if (ToWho.Contains("Dealer"))
+        {
+            UpdateDealer(CardValue);
+        }
+
+        if (isPlayed(GetCardIndex(CardValue, CardSuit)))
+        {
+            Debug.Log("isPlayed(true)");
+            CardValue = Random.Range(1, 13);
+            CardSuit = Random.Range(1, 4);
+            DealCards(ToWho, CardValue, CardSuit);
+        } else { 
+            Debug.Log("isPlayed(false)");
+            if (CardValue >= 2 && CardValue <= 10)
+            {
+
+                if (CardSuit == 1)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardC" + CardValue.ToString()).GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 2)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardD" + CardValue.ToString()).GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 3)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardH" + CardValue.ToString()).GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 4)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardS" + CardValue.ToString()).GetComponent<SpriteRenderer>().sprite;
+                }
+            }
+            else if (CardValue == 11)
+            {
+                if (CardSuit == 1)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardCA").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 2)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardDA").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 3)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardHA").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 4)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardSA").GetComponent<SpriteRenderer>().sprite;
+                }
+            }
+            else if (CardValue == 12)
+            {
+                if (CardSuit == 1)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardCJ").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 2)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardDJ").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 3)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardHJ").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 4)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardSJ").GetComponent<SpriteRenderer>().sprite;
+                }
+            }
+            else if (CardValue == 13)
+            {
+                if (CardSuit == 1)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardCK").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 2)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardDK").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 3)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardHK").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 4)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardSK").GetComponent<SpriteRenderer>().sprite;
+                }
+            }
+            else if (CardValue == 1)
+            {
+                if (CardSuit == 1)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardCQ").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 2)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardDQ").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 3)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardHQ").GetComponent<SpriteRenderer>().sprite;
+                }
+                else if (CardSuit == 4)
+                {
+                    GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardSQ").GetComponent<SpriteRenderer>().sprite;
+                }
             }
         }
-        else if (CardValue == 1 || CardValue == 11)
+        //End DealCards()
+    }
+    public void HitPlayer()
+    {
+        Debug.Log("HitPlayer() fired!");
+        GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
+        GameStatus.GetComponent<Text>().text = "Player Hits... (Numcards = " + NumPlayerCards.ToString();
+        if (NumPlayerCards == 2)
         {
-            if (CardSuit == 1)
+            DealCards("PlayerHand3", Random.Range(1, 13), Random.Range(1, 4));
+            NumPlayerCards++;
+        } else if (NumPlayerCards == 3)
+        {
+            DealCards("PlayerHand4", Random.Range(1, 13), Random.Range(1, 4));
+            NumPlayerCards++;
+        }
+        else if (NumPlayerCards == 4)
+        {
+            DealCards("PlayerHand5", Random.Range(1, 13), Random.Range(1, 4));
+            NumPlayerCards++;
+        } else if (NumPlayerCards >= 5)
+        {
+            StandPlayer();
+        }
+        //Is this needed?
+        //CheckGame();
+    }
+    public void StandPlayer()
+    {
+        GameObject hl = GameObject.FindGameObjectWithTag("HintLabel");
+        GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
+        isPlayerStanding = true;
+        Debug.Log("StandPlayer() fired!");
+        GameManager.Instance.PlayerValue = int.Parse(hl.GetComponent<Text>().text);
+        HitDealer();
+        GameStatus.GetComponent<Text>().text = "Player Stands...";
+    }
+    public void HitDealer()
+    {
+        GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
+        Debug.Log("HitDealer() fired!");
+        GameStatus.GetComponent<Text>().text = "Dealer Hits...";
+        do
+        {
+            if (GameManager.Instance.DealerValue <= 17)
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardCA").GetComponent<SpriteRenderer>().sprite;
+                if (NumDealerCards == 2)
+                {
+                    DealCards("DealerHand3", Random.Range(1, 13), Random.Range(1, 4));
+                    NumDealerCards++;
+                }
+                else if (NumDealerCards == 3)
+                {
+                    DealCards("DealerHand4", Random.Range(1, 13), Random.Range(1, 4));
+                    NumDealerCards++;
+                }
+                else if (NumDealerCards == 4)
+                {
+                    DealCards("DealerHand5", Random.Range(1, 13), Random.Range(1, 4));
+                    NumDealerCards++;
+                }
             }
-            else if (CardSuit == 2)
+            else if (GameManager.Instance.DealerValue >= 17)
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardDA").GetComponent<SpriteRenderer>().sprite;
+                StandDealer();
             }
-            else if (CardSuit == 3)
+        } while (GameManager.Instance.DealerValue <= 17);
+    }
+    public void StandDealer()
+    {
+        GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
+        isDealerStanding = true;
+        Debug.Log("StandDealer() fired!");
+        GameStatus.GetComponent<Text>().text = "Dealer Stands...";
+        GameManager.Instance.isGameOver = true;
+        CheckGame();
+    }
+    public void ShowDealButton()
+    {
+        GameObject.FindGameObjectWithTag("Respawn").transform.localScale = new Vector3(1, 1, 1);
+    }
+    public void CheckGame()
+    {
+        GameManager.Instance.isGameOver = false;
+        GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
+
+        //Set isGameOver here.
+
+        //Bust Checks
+        if (GameManager.Instance.PlayerValue >= 22)
+        {
+            Debug.Log("PLAYER BUST! (CheckGame())");
+            GameStatus.GetComponent<Text>().text = "Dealer Wins!";
+            ShowDealButton();
+            GameManager.Instance.isGameOver = true;
+        }
+
+        if (GameManager.Instance.DealerValue >= 22) {
+
+            Debug.Log("DEALER BUST! (CheckGame())");
+            GameStatus.GetComponent<Text>().text = "Player Wins!";
+            ShowDealButton();
+            GameManager.Instance.isGameOver = true;
+        }
+
+        //Win Condition Check
+        if (isDealerStanding == true && isPlayerStanding == true)
+        {
+            if (GameManager.Instance.DealerValue > GameManager.Instance.PlayerValue && GameManager.Instance.DealerValue <= 21)
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardHA").GetComponent<SpriteRenderer>().sprite;
+                Debug.Log("DEALER WINS! (CheckGame())");
+                GameStatus.GetComponent<Text>().text = "Dealer Wins!";
+                ShowDealButton();
+                GameManager.Instance.isGameOver = true;
             }
-            else if (CardSuit == 4)
+            else if (GameManager.Instance.DealerValue > GameManager.Instance.PlayerValue && GameManager.Instance.DealerValue <= 21)
             {
-                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardSA").GetComponent<SpriteRenderer>().sprite;
+                Debug.Log("DEALER WINS! (CheckGame())");
+                GameStatus.GetComponent<Text>().text = "Dealer Wins!";
+                ShowDealButton();
+                GameManager.Instance.isGameOver = true;
+            } else if (GameManager.Instance.PlayerValue > GameManager.Instance.DealerValue && GameManager.Instance.PlayerValue <= 21)
+            {
+                Debug.Log("PLAYER WINS! (CheckGame())");
+                GameStatus.GetComponent<Text>().text = "Player Wins!";
+                ShowDealButton();
+                GameManager.Instance.isGameOver = true;
             }
         }
+       //GameManager.Instance.isGameOver = true;
+       //Game is over. Do rewards...
+       if (GameManager.Instance.isGameOver == true)
+       {
+            //DealerValue Checks
+            if (GameManager.Instance.DealerValue > GameManager.Instance.PlayerValue && GameManager.Instance.DealerValue <= 21)
+            {
+                GameManager.Instance.CurrentCash = GameManager.Instance.CurrentCash - CurrentBet;
+            }
+            else if (GameManager.Instance.DealerValue >= 22)
+            {
+                GameManager.Instance.CurrentCash = GameManager.Instance.CurrentCash + CurrentBet;
+            }
+
+            //PlayerValue Checks
+            if (GameManager.Instance.PlayerValue > GameManager.Instance.DealerValue && GameManager.Instance.PlayerValue <= 21)
+            {
+                GameManager.Instance.CurrentCash = GameManager.Instance.CurrentCash + CurrentBet;
+            } else if (GameManager.Instance.PlayerValue >= 22)
+            {
+                GameManager.Instance.CurrentCash = GameManager.Instance.CurrentCash - CurrentBet;
+            }
+        }
+
     }
     public void DestroyDeck()
     {
@@ -153,5 +551,5 @@ public class BlackJack : MonoBehaviour {
         Destroy(GameObject.FindGameObjectWithTag("DealerHand2"));
         Destroy(GameObject.FindGameObjectWithTag("PlayerHand2"));
     }
-    //end
+    //End BlackJack.cs
 }

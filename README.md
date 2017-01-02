@@ -1,3 +1,32 @@
+v0.0.1-r04
+
+Added CardIndex
+
+Added Player and Dealer Hints (Sums card Values)
+
+(Aces not evaluated yet)
+
+Added PlayerValue and DealerValue
+
+Added Dealer/Player Cards 3,4,5
+
+Added Bet Slider
+
+Added Bet Label
+
+Added Player/DealerValue Hint Labels
+
+Added CheckGame() and HideDeck()
+
+Cards are checked against virtual deck
+
+Aces not processed.
+
+Not playable yet.
+
+<img src="https://i.gyazo.com/805e2a038d1f587b17eaec26dc0e5208.jpg">
+
+
 v0.0.1-r03
 
 Added Card face down texture
