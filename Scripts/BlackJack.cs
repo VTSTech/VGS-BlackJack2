@@ -21,12 +21,21 @@ public class BlackJack : MonoBehaviour {
     public static bool[] hasCardPlayed = new bool[53];
     public bool isPlayerStanding, isDealerStanding, DealerHasAce, PlayerHasAce;
     // Use this for initialization
-    void Start()
+    public void Start()
     {
-        
+
         Debug.Log("BlackJack.cs called by GameObject: " + gameObject.name);
+        GameObject pl = GameObject.FindGameObjectWithTag("PauseLabel");
+        GameObject.FindGameObjectWithTag("GameOverPanel").transform.localScale = new Vector3(0, 0, 0);
         GameManager.Instance.CurrentCash = 1000;
         CurrentBet = 100;
+        if (GameManager.Instance.IsPaused == true)
+        {
+            pl.GetComponent<Text>().enabled = true;
+        } else if (GameManager.Instance.IsPaused == false)
+        {
+            pl.GetComponent<Text>().enabled = false;
+        }
         CreateDeck();
     }
     // Update is called once per frame
@@ -45,6 +54,8 @@ public class BlackJack : MonoBehaviour {
     public void DealNewGame()
     {
         GameObject hl = GameObject.FindGameObjectWithTag("HintLabel");
+        GameObject dh = GameObject.FindGameObjectWithTag("DealerHint");
+        GameObject.FindGameObjectWithTag("GameOverPanel").transform.localScale = new Vector3(0, 0, 0);
         Debug.Log("DealNewGame() fired!");
         GameManager.Instance.isNewGame = false;
         GameManager.Instance.isGameOver = false;
@@ -67,10 +78,14 @@ public class BlackJack : MonoBehaviour {
         CardHintB = 0;
         DealerHintA = 0;
         DealerHintB = 0;
+        CardValue = 0;
+        CardSuit = 0;
         NumDealerCards = 2;
         NumPlayerCards = 2;
         GameManager.Instance.DealerValue = 0;
         GameManager.Instance.PlayerValue = 0;
+        hl.GetComponent<Text>().text = GameManager.Instance.PlayerValue.ToString();
+        dh.GetComponent<Text>().text = GameManager.Instance.DealerValue.ToString();
         for (int x = 0; x <= 52; x++)
         {
             //Debug.Log("hasCardPlayed[" + x.ToString() + "]");
@@ -112,14 +127,18 @@ public class BlackJack : MonoBehaviour {
     }
     public bool isPlayed(int CardIndex)
     {
-        Debug.Log("isPlayed(" + CardIndex.ToString() + ") fired");
+        Debug.Log("isPlayed(" + CardIndex.ToString() + ") fired DEBUG: " + hasCardPlayed[CardIndex]);
         if (hasCardPlayed[CardIndex] == false)
         {
             return false;
-        } else
+        } else if (hasCardPlayed[CardIndex] == true)
         {
             return true;
-        }    
+        }
+        else
+        {
+            return true;
+        }
     }
     public void HideDeck()
     { 
@@ -241,20 +260,22 @@ public class BlackJack : MonoBehaviour {
             }
             else
             {
+
                 CardHintA = CardHintA + CardHintB;
                 if (CardHintA + 11 >= 22)
                 {
                     CardHintB = 1;
+                    PlayerHasAce = false;
                 }
                 else if (CardHintA + 11 <= 21)
                 {
                     CardHintB = 11;
+                    PlayerHasAce = true;
                 }
 
             }
             GameManager.Instance.PlayerValue = (CardHintA + CardHintB);
             hl.GetComponent<Text>().text = GameManager.Instance.PlayerValue.ToString();
-            PlayerHasAce = true;
         }
 
     }
@@ -313,16 +334,18 @@ public class BlackJack : MonoBehaviour {
                 if (DealerHintA + 11 >= 22)
                 {
                     DealerHintB = 1;
+                    DealerHasAce = false;
                 }
                 else if (DealerHintA + 11 <= 21)
                 {
                     DealerHintB = 11;
+                    DealerHasAce = true;
                 }
 
             }
             GameManager.Instance.DealerValue = (DealerHintA + DealerHintB);
             dh.GetComponent<Text>().text = GameManager.Instance.DealerValue.ToString();
-            DealerHasAce = true;
+            
         }
     }
     public void DealCards(string ToWho, int CardValue, int CardSuit)
@@ -335,23 +358,13 @@ public class BlackJack : MonoBehaviour {
         GameStatus.GetComponent<Text>().text = "Dealing Cards...";
         Debug.Log("DealCards() fired! ToWho(" + ToWho + ")");
         GameObject.FindGameObjectWithTag(ToWho).transform.localScale = new Vector3(1, 1, 1);
-        if (ToWho.Contains("Player"))
+        if (hasCardPlayed[GetCardIndex(CardValue, CardSuit)] == true)
         {
-            UpdateHint(CardValue);
-        }
-        else if (ToWho.Contains("Dealer"))
-        {
-            UpdateDealer(CardValue);
-        }
-
-        if (isPlayed(GetCardIndex(CardValue, CardSuit)))
-        {
-            Debug.Log("isPlayed(true)");
-            CardValue = Random.Range(1, 13);
-            CardSuit = Random.Range(1, 4);
-            DealCards(ToWho, CardValue, CardSuit);
+            Debug.Log("DEBUG: " + hasCardPlayed[GetCardIndex(CardValue, CardSuit)]);
+            DealCards(ToWho, Random.Range(1, 13), Random.Range(1, 4));
         } else { 
-            Debug.Log("isPlayed(false)");
+            //Debug.Log("isPlayed(false)");
+            hasCardPlayed[GetCardIndex(CardValue, CardSuit)] = true;
             if (CardValue >= 2 && CardValue <= 10)
             {
 
@@ -447,6 +460,19 @@ public class BlackJack : MonoBehaviour {
                 {
                     GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardSQ").GetComponent<SpriteRenderer>().sprite;
                 }
+            }
+            //DealerHand1 is face down
+            if (ToWho == "DealerHand1")
+            {
+                GameObject.FindGameObjectWithTag(ToWho).GetComponent<Image>().sprite = GameObject.FindGameObjectWithTag("CardBack").GetComponent<SpriteRenderer>().sprite;
+            }
+            if (ToWho.Contains("Player"))
+            {
+                UpdateHint(CardValue);
+            }
+            else if (ToWho.Contains("Dealer"))
+            {
+                UpdateDealer(CardValue);
             }
         }
         //End DealCards()
@@ -556,24 +582,43 @@ public class BlackJack : MonoBehaviour {
     {
         GameObject GameStatus = GameObject.FindGameObjectWithTag("GameStatus");
         GameObject CashLabel = GameObject.FindGameObjectWithTag("CashLabel");
+        GameObject hl = GameObject.FindGameObjectWithTag("HintLabel");
+        GameObject dh = GameObject.FindGameObjectWithTag("DealerHint");
 
         //Set isGameOver here.
 
         //Bust Checks
-        if (GameManager.Instance.PlayerValue >= 22)
+        if (GameManager.Instance.PlayerValue >= 22 && GameManager.Instance.isGameOver == false)
         {
-            Debug.Log("PLAYER BUST! (CheckGame())");
-            GameStatus.GetComponent<Text>().text = "Dealer Wins!";
-            ShowDealButton();
-            GameManager.Instance.isGameOver = true;
+            if (PlayerHasAce == false)
+            {
+                Debug.Log("PLAYER BUST! (CheckGame())");
+                GameStatus.GetComponent<Text>().text = "Dealer Wins!";
+                ShowDealButton();
+                GameManager.Instance.isGameOver = true;
+            }
+            else if (PlayerHasAce == true)
+            {
+                PlayerHasAce = false;
+                GameManager.Instance.PlayerValue = (GameManager.Instance.PlayerValue - 10);
+                hl.GetComponent<Text>().text = GameManager.Instance.PlayerValue.ToString();
+            }
         }
-
-        if (GameManager.Instance.DealerValue >= 22) {
-
-            Debug.Log("DEALER BUST! (CheckGame())");
-            GameStatus.GetComponent<Text>().text = "Player Wins!";
-            ShowDealButton();
-            GameManager.Instance.isGameOver = true;
+        if (GameManager.Instance.DealerValue >= 22 && GameManager.Instance.isGameOver == false)
+        {
+            if (DealerHasAce == false)
+            {
+                Debug.Log("DEALER BUST! (CheckGame())");
+                GameStatus.GetComponent<Text>().text = "Player Wins!";
+                ShowDealButton();
+                GameManager.Instance.isGameOver = true;
+            }
+            else if (DealerHasAce == true)
+            {
+                DealerHasAce = false;
+                GameManager.Instance.DealerValue = (GameManager.Instance.DealerValue - 10);
+                dh.GetComponent<Text>().text = GameManager.Instance.DealerValue.ToString();
+            }
         }
 
         //Win Condition Check
@@ -586,13 +631,7 @@ public class BlackJack : MonoBehaviour {
                 ShowDealButton();
                 GameManager.Instance.isGameOver = true;
             }
-            else if (GameManager.Instance.DealerValue > GameManager.Instance.PlayerValue && GameManager.Instance.DealerValue <= 21)
-            {
-                Debug.Log("DEALER WINS! (CheckGame())");
-                GameStatus.GetComponent<Text>().text = "Dealer Wins!";
-                ShowDealButton();
-                GameManager.Instance.isGameOver = true;
-            } else if (GameManager.Instance.PlayerValue > GameManager.Instance.DealerValue && GameManager.Instance.PlayerValue <= 21)
+            else if (GameManager.Instance.PlayerValue > GameManager.Instance.DealerValue && GameManager.Instance.PlayerValue <= 21)
             {
                 Debug.Log("PLAYER WINS! (CheckGame())");
                 GameStatus.GetComponent<Text>().text = "Player Wins!";
@@ -603,6 +642,20 @@ public class BlackJack : MonoBehaviour {
             {
                 Debug.Log("PUSH! (CheckGame())");
                 GameStatus.GetComponent<Text>().text = "No One Wins!";
+                ShowDealButton();
+                GameManager.Instance.isGameOver = true;
+            }
+            else  if (GameManager.Instance.PlayerValue >= 22)
+            {
+                Debug.Log("DEALER WINS! (CheckGame())");
+                GameStatus.GetComponent<Text>().text = "Dealer Wins!";
+                ShowDealButton();
+                GameManager.Instance.isGameOver = true;
+            }
+            else if (GameManager.Instance.DealerValue >= 22)
+            {
+                Debug.Log("PLAYER WINS! (CheckGame())");
+                GameStatus.GetComponent<Text>().text = "Player Wins!";
                 ShowDealButton();
                 GameManager.Instance.isGameOver = true;
             }
@@ -636,17 +689,25 @@ public class BlackJack : MonoBehaviour {
             }
         }
 
+        //No $ then Game Over.
+        GameObject gop = GameObject.FindGameObjectWithTag("GameOverPanel");
+        if (GameManager.Instance.CurrentCash == 0)
+        {
+            gop.transform.localScale = new Vector3(1, 1, 1);
+        }
+
     }
     public void UpdateBet()
     {
         GameObject BetLabel = GameObject.FindGameObjectWithTag("BetLabel");
         GameObject BetSlider = GameObject.FindGameObjectWithTag("BetSlider");
-        if (isDealerStanding == true && isPlayerStanding == true)
+        if (isDealerStanding == true && isPlayerStanding == true || GameManager.Instance.isGameOver == true)
         {
             if (BetSlider.GetComponent<Slider>().value > GameManager.Instance.CurrentCash)
             {
                 SliderVal = GameManager.Instance.CurrentCash;
                 CurrentBet = GameManager.Instance.CurrentCash;
+                BetSlider.GetComponent<Slider>().value = SliderVal;
                 BetLabel.GetComponent<Text>().text = GameManager.Instance.CurrentCash.ToString();
             }
             else if (BetSlider.GetComponent<Slider>().value < GameManager.Instance.CurrentCash)

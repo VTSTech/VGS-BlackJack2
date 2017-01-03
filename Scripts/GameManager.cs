@@ -54,7 +54,7 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        GameObject pl = GameObject.FindGameObjectWithTag("PauseLabel");
+        /*GameObject pl = GameObject.FindGameObjectWithTag("PauseLabel");
         if (IsPaused == true)
         {
             pl.GetComponent<Text>().enabled = true;
@@ -62,7 +62,7 @@ public class GameManager : MonoBehaviour
         {
             pl.GetComponent<Text>().enabled = false;
         }
-        
+        */      
     }
     public void NewGame()
     {

@@ -1,3 +1,24 @@
+v0.0.1-r07
+
+Aces are now either 1 or 11.
+
+Card Total drops if Ace in Hand
+and you would otherwise bust.
+
+DealerHand1 is now always face down
+(Dealer Total Hint is still displayed
+during development. Will hide it for release.)
+
+Added GameOverPanel
+
+Game now ends with Player reaches $0
+
+Removed isPlayed(), bool hasCardPlayed[] is used.
+
+Reorganized Game Logic in DealCards()
+
+<img src="https://i.gyazo.com/b99c98cb618ada9ceccadec8145d08e0.jpg">
+
 v0.0.1-r06
 
 Now processes Aces
